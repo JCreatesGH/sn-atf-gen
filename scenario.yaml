@@ -1,0 +1,5 @@
+name: Create Incident - happy path
+table: incident
+impersonate: itil.user
+set: {short_description: "printer down", priority: 1, urgency: 2}
+assertFields: {priority: 1, state: "New"}

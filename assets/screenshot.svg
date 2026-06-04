@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400" viewBox="0 0 800 400" font-family="SFMono-Regular,Consolas,Menlo,monospace">
+  <rect width="800" height="400" rx="10" fill="#0d1117"/>
+  <text x="24" y="36" font-size="18" font-weight="700" fill="#e6edf3" font-family="system-ui,sans-serif">sn-atf-gen</text>
+  <text x="180" y="36" font-size="13" fill="#7d8590" font-family="system-ui,sans-serif">YAML scenario → ServiceNow ATF test</text>
+  <rect x="20" y="54" width="330" height="330" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="34" y="76" font-size="11" fill="#6e7681">scenario.yaml</text>
+  <text font-size="11.5" xml:space="preserve">
+    <tspan x="34" y="102" fill="#79c0ff">name:</tspan><tspan fill="#c9d1d9"> Create Incident - happy path</tspan>
+    <tspan x="34" y="122" fill="#79c0ff">table:</tspan><tspan fill="#c9d1d9"> incident</tspan>
+    <tspan x="34" y="142" fill="#79c0ff">impersonate:</tspan><tspan fill="#c9d1d9"> itil.user</tspan>
+    <tspan x="34" y="162" fill="#79c0ff">set:</tspan>
+    <tspan x="34" y="182" fill="#c9d1d9">  short_description: printer down</tspan>
+    <tspan x="34" y="202" fill="#c9d1d9">  priority: 1</tspan>
+    <tspan x="34" y="222" fill="#79c0ff">assertFields:</tspan>
+    <tspan x="34" y="242" fill="#c9d1d9">  priority: 1</tspan>
+    <tspan x="34" y="262" fill="#c9d1d9">  state: New</tspan>
+  </text>
+  <text x="362" y="210" font-size="20" fill="#30363d">→</text>
+  <rect x="392" y="54" width="388" height="330" rx="8" fill="#11151c" stroke="#30363d"/>
+  <text x="406" y="76" font-size="11" fill="#3fb950">generated ATF steps</text>
+  <text font-size="11.5" xml:space="preserve">
+    <tspan x="406" y="104" fill="#d29922">1.</tspan><tspan fill="#e6edf3"> Impersonate a User </tspan><tspan fill="#6e7681">(itil.user)</tspan>
+    <tspan x="406" y="128" fill="#d29922">2.</tspan><tspan fill="#e6edf3"> Open a New Form </tspan><tspan fill="#6e7681">(incident)</tspan>
+    <tspan x="406" y="152" fill="#d29922">3.</tspan><tspan fill="#e6edf3"> Set Field Values</tspan>
+    <tspan x="430" y="170" fill="#9aa4b2">short_description="printer down"</tspan>
+    <tspan x="430" y="188" fill="#9aa4b2">priority=1</tspan>
+    <tspan x="406" y="212" fill="#d29922">4.</tspan><tspan fill="#e6edf3"> Submit a Form</tspan>
+    <tspan x="406" y="236" fill="#d29922">5.</tspan><tspan fill="#e6edf3"> Record Validation </tspan><tspan fill="#6e7681">(exists)</tspan>
+    <tspan x="406" y="260" fill="#d29922">6.</tspan><tspan fill="#e6edf3"> Field Values Validation</tspan>
+    <tspan x="430" y="278" fill="#9aa4b2">priority=1, state="New"</tspan>
+    <tspan x="406" y="312" fill="#6e7681">→ tests/*.atf.json  +  tests/*.md plan</tspan>
+  </text>
+  <text x="24" y="396" font-size="12" fill="#3fb950" font-family="system-ui,sans-serif">✓ 6 tests · canonical ATF step sequence · pure generator + built-in YAML</text>
+</svg>
