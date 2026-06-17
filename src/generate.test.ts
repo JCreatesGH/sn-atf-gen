@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildSteps, generate } from "./generate";
+import { buildSteps, generate, validateSpec, generateFromYaml } from "./generate";
 import { parse } from "./yaml";
 import type { AtfSpec } from "./types";
 
@@ -57,5 +57,42 @@ describe("yaml", () => {
     const parsed = parse(y) as AtfSpec;
     expect(parsed.set!.priority).toBe(2);
     expect(parsed.set!.short_description).toBe("hi");
+  });
+});
+
+describe("validateSpec", () => {
+  it("accepts a spec with name and table", () => {
+    expect(validateSpec({ name: "t", table: "incident" })).toEqual([]);
+  });
+
+  it("flags a missing name", () => {
+    expect(validateSpec({ table: "incident" })).toContain("missing required field: name");
+  });
+
+  it("flags a missing table", () => {
+    expect(validateSpec({ name: "t" })).toContain("missing required field: table");
+  });
+
+  it("reports a non-mapping (e.g. empty or scalar YAML)", () => {
+    expect(validateSpec(null)).toEqual(["spec is not a YAML mapping"]);
+    expect(validateSpec("nope" as unknown as AtfSpec)).toEqual(["spec is not a YAML mapping"]);
+  });
+});
+
+describe("generateFromYaml", () => {
+  it("generates files from a valid YAML scenario", () => {
+    const y = `name: Create Incident\ntable: incident\nset: {short_description: hi}\n`;
+    const { files, errors } = generateFromYaml(y);
+    expect(errors).toEqual([]);
+    expect(Object.keys(files)).toContain("tests/create-incident.atf.json");
+    const json = JSON.parse(files["tests/create-incident.atf.json"]);
+    expect(json.table).toBe("incident");
+  });
+
+  it("returns errors and no files for an invalid scenario", () => {
+    const { files, errors } = generateFromYaml(`description: just a note\n`);
+    expect(errors).toContain("missing required field: name");
+    expect(errors).toContain("missing required field: table");
+    expect(files).toEqual({});
   });
 });

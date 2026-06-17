@@ -24,6 +24,39 @@ const files = generate({
 // files["tests/create-incident-happy-path.md"]         -> human-readable plan
 ```
 
+## CLI
+
+Installing the package adds an `sn-atf-gen` command — point it at a YAML scenario:
+
+```yaml
+# create-incident.yaml
+name: Create Incident - happy path
+table: incident
+impersonate: itil.user
+set:
+  short_description: printer down
+  priority: 1
+assertFields:
+  priority: 1
+  state: New
+```
+
+```bash
+$ sn-atf-gen create-incident.yaml                 # write tests/*.atf.json + *.md (use --out <dir>)
+$ sn-atf-gen create-incident.yaml --print         # print every generated file to stdout
+$ sn-atf-gen create-incident.yaml --json          # print only the ATF test JSON
+```
+
+Invalid scenarios fail loudly (exit `1`) with the missing fields listed, so you can wire it
+straight into a pipeline:
+
+```bash
+$ sn-atf-gen broken.yaml
+invalid scenario:
+  - missing required field: name
+  - missing required field: table
+```
+
 ## What it generates
 
 The canonical ATF step sequence, in order, only emitting the steps your scenario needs:
@@ -40,7 +73,7 @@ Output is a JSON test definition plus a Markdown test plan for review. `generate
 ## Development
 
 ```bash
-npm install && npm test    # 6 tests
+npm install && npm test    # 12 tests
 npm run build              # tsc, clean
 ```
 

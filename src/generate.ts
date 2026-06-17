@@ -1,4 +1,5 @@
 import { AtfSpec, AtfStep, FileMap } from "./types";
+import { parse } from "./yaml.js";
 
 const STEP_TYPES = {
   impersonate: "Impersonate a User",
@@ -66,3 +67,19 @@ function describe(step: AtfStep): string {
 }
 
 const slug = (s: string) => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "test";
+
+/** Hard-error checks on a spec (used before generating). */
+export function validateSpec(spec: Partial<AtfSpec> | null | undefined): string[] {
+  if (!spec || typeof spec !== "object") return ["spec is not a YAML mapping"];
+  const errors: string[] = [];
+  if (!spec.name) errors.push("missing required field: name");
+  if (!spec.table) errors.push("missing required field: table");
+  return errors;
+}
+
+/** Parse a YAML scenario, validate it, and generate the files (or return errors). */
+export function generateFromYaml(yamlText: string): { files: FileMap; errors: string[] } {
+  const spec = parse(yamlText) as AtfSpec;
+  const errors = validateSpec(spec);
+  return errors.length ? { files: {}, errors } : { files: generate(spec), errors: [] };
+}
