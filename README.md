@@ -11,7 +11,7 @@ Generate ServiceNow **Automated Test Framework** (ATF) tests from a short YAML s
 ## Use it
 
 ```ts
-import { generate, buildSteps } from "sn-atf-gen";
+import { generate, generateSuite, buildSteps } from "sn-atf-gen";
 
 const files = generate({
   name: "Create Incident - happy path",
@@ -22,6 +22,19 @@ const files = generate({
 });
 // files["tests/create-incident-happy-path.atf.json"]  -> ATF test definition
 // files["tests/create-incident-happy-path.md"]         -> human-readable plan
+```
+
+### Whole suites at once
+
+Real test coverage is many scenarios, not one. `generateSuite` takes a list of specs and
+emits collision-safe filenames plus a `tests/README.md` index tying them together:
+
+```ts
+const files = generateSuite([
+  { name: "Create Incident", table: "incident", set: { short_description: "printer down" } },
+  { name: "Resolve Incident", table: "incident", set: { state: "Resolved" } },
+], "Incident Lifecycle");
+// tests/create-incident.atf.json, tests/resolve-incident.atf.json, tests/README.md
 ```
 
 ## CLI
@@ -47,6 +60,33 @@ $ sn-atf-gen create-incident.yaml --print         # print every generated file t
 $ sn-atf-gen create-incident.yaml --json          # print only the ATF test JSON
 ```
 
+A single YAML file can hold a whole suite — either a top-level list, or a named `tests:` block:
+
+```yaml
+# incident-suite.yaml
+name: Incident Lifecycle
+tests:
+  - name: Create Incident
+    table: incident
+    set: {short_description: printer down, priority: 1}
+  - name: Resolve Incident
+    table: incident
+    set: {state: Resolved}
+```
+
+```bash
+$ sn-atf-gen incident-suite.yaml --out atf/   # one .atf.json + .md per test, plus tests/README.md
+```
+
+Per-test failures are reported with the offending test's index, so a bad scenario can't
+slip through silently:
+
+```bash
+$ sn-atf-gen incident-suite.yaml
+invalid scenario:
+  - test 2: missing required field: table
+```
+
 Invalid scenarios fail loudly (exit `1`) with the missing fields listed, so you can wire it
 straight into a pipeline:
 
@@ -68,12 +108,12 @@ The canonical ATF step sequence, in order, only emitting the steps your scenario
 5. **Record Validation** — a record matching the entered values exists
 6. **Field Values Validation** (from `assertFields`)
 
-Output is a JSON test definition plus a Markdown test plan for review. `generate(spec)` is a **pure function**, so every branch is unit-tested, and a tiny built-in YAML parser keeps it dependency-free.
+Output is a JSON test definition plus a Markdown test plan for review. `generate(spec)` and `generateSuite(specs)` are **pure functions**, so every branch is unit-tested, and a tiny built-in YAML parser — now with block-sequence support so suites can be authored naturally — keeps it dependency-free.
 
 ## Development
 
 ```bash
-npm install && npm test    # 12 tests
+npm install && npm test    # 19 tests
 npm run build              # tsc, clean
 ```
 

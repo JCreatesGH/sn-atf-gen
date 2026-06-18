@@ -9,6 +9,12 @@ export interface AtfSpec {
   impersonate?: string;                                 // run as a given user
 }
 
+// A suite of scenarios generated together (a YAML list, or `{name?, tests: [...]}`).
+export interface AtfSuite {
+  name?: string;
+  tests: AtfSpec[];
+}
+
 // A normalized ATF step (maps to the sys_atf_step config we emit).
 export interface AtfStep {
   order: number;

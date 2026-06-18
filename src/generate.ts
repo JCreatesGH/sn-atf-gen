@@ -1,4 +1,4 @@
-import { AtfSpec, AtfStep, FileMap } from "./types";
+import { AtfSpec, AtfStep, AtfSuite, FileMap } from "./types";
 import { parse } from "./yaml.js";
 
 const STEP_TYPES = {
@@ -38,7 +38,7 @@ export function buildSteps(spec: AtfSpec): AtfStep[] {
   return steps;
 }
 
-export function generate(spec: AtfSpec): FileMap {
+export function generate(spec: AtfSpec, slugName: string = slug(spec.name)): FileMap {
   const steps = buildSteps(spec);
   const test = {
     name: spec.name,
@@ -48,13 +48,31 @@ export function generate(spec: AtfSpec): FileMap {
   };
 
   const files: FileMap = {};
-  files[`tests/${slug(spec.name)}.atf.json`] = JSON.stringify(test, null, 2) + "\n";
+  files[`tests/${slugName}.atf.json`] = JSON.stringify(test, null, 2) + "\n";
 
   // a Markdown test plan for human review / docs
   const md = [`# ${spec.name}`, "", `**Table:** \`${spec.table}\``, "", "## Steps", ""];
   for (const s of steps) md.push(`${s.order}. **${s.type}** — ${describe(s)}`);
-  files[`tests/${slug(spec.name)}.md`] = md.join("\n") + "\n";
+  files[`tests/${slugName}.md`] = md.join("\n") + "\n";
 
+  return files;
+}
+
+/** Generate a whole suite of scenarios at once, with collision-safe filenames
+ * and a `tests/README.md` index. */
+export function generateSuite(specs: AtfSpec[], suiteName = "ATF Suite"): FileMap {
+  const files: FileMap = {};
+  const used = new Map<string, number>();
+  const index: string[] = [`# ${suiteName}`, "", `${specs.length} test${specs.length === 1 ? "" : "s"}.`, "", "## Tests", ""];
+  for (const spec of specs) {
+    const base = slug(spec.name);
+    const n = (used.get(base) ?? 0) + 1;
+    used.set(base, n);
+    const name = n > 1 ? `${base}-${n}` : base;          // de-dup repeated names
+    Object.assign(files, generate(spec, name));
+    index.push(`- **${spec.name}** (\`${spec.table}\`) — ${buildSteps(spec).length} steps → \`tests/${name}.atf.json\``);
+  }
+  files["tests/README.md"] = index.join("\n") + "\n";
   return files;
 }
 
@@ -77,9 +95,25 @@ export function validateSpec(spec: Partial<AtfSpec> | null | undefined): string[
   return errors;
 }
 
-/** Parse a YAML scenario, validate it, and generate the files (or return errors). */
+/** Parse a YAML scenario (a single spec, a list of specs, or `{name?, tests:[...]}`),
+ * validate it, and generate the files (or return errors). */
 export function generateFromYaml(yamlText: string): { files: FileMap; errors: string[] } {
-  const spec = parse(yamlText) as AtfSpec;
+  const parsed = parse(yamlText) as AtfSpec | AtfSpec[] | AtfSuite;
+  const list: AtfSpec[] | null = Array.isArray(parsed)
+    ? parsed
+    : parsed && typeof parsed === "object" && Array.isArray((parsed as AtfSuite).tests)
+      ? (parsed as AtfSuite).tests
+      : null;
+
+  if (list) {
+    const errors: string[] = [];
+    list.forEach((s, i) => validateSpec(s).forEach((e) => errors.push(`test ${i + 1}: ${e}`)));
+    if (errors.length) return { files: {}, errors };
+    const suiteName = !Array.isArray(parsed) && (parsed as AtfSuite).name ? (parsed as AtfSuite).name! : "ATF Suite";
+    return { files: generateSuite(list, suiteName), errors: [] };
+  }
+
+  const spec = parsed as AtfSpec;
   const errors = validateSpec(spec);
   return errors.length ? { files: {}, errors } : { files: generate(spec), errors: [] };
 }

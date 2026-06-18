@@ -1,3 +1,3 @@
-export { generate, buildSteps, validateSpec, generateFromYaml } from "./generate.js";
+export { generate, generateSuite, buildSteps, validateSpec, generateFromYaml } from "./generate.js";
 export { parse as parseYaml } from "./yaml.js";
-export type { AtfSpec, AtfStep, FileMap } from "./types.js";
+export type { AtfSpec, AtfStep, AtfSuite, FileMap } from "./types.js";
